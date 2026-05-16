@@ -1,0 +1,39 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SANDBOX_MODE=docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For spawning sandbox containers
+
+  sandbox:
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    # This container is spawned per-request, not long-running
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    network_mode: none  # No network access
